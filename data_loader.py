@@ -12,6 +12,12 @@ import pandas as pd
 
 DATA_DIR = Path(__file__).parent / "StreamingHistory"
 
+# Playlists to exclude from analysis
+EXCLUDED_PLAYLISTS = [
+    "SD/TB - Thanks 4 Sharing",
+    "SD/TB - Client Confirmed Bangers",
+]
+
 
 def load_single_file(filepath: Path) -> list[dict]:
     """Load a single JSON streaming history file."""
@@ -419,18 +425,24 @@ def load_playlists() -> dict:
 
 
 def get_playlist_names() -> list[str]:
-    """Get list of all playlist names."""
+    """Get list of all playlist names (excluding filtered playlists)."""
     data = load_playlists()
-    return [p.get("name", "Unknown") for p in data.get("playlists", [])]
+    return [
+        p.get("name", "Unknown")
+        for p in data.get("playlists", [])
+        if p.get("name") not in EXCLUDED_PLAYLISTS
+    ]
 
 
 def get_playlist_stats() -> pd.DataFrame:
-    """Get stats for each playlist."""
+    """Get stats for each playlist (excluding filtered playlists)."""
     data = load_playlists()
     playlists = data.get("playlists", [])
 
     stats = []
     for p in playlists:
+        if p.get("name") in EXCLUDED_PLAYLISTS:
+            continue
         items = p.get("items", [])
         track_items = [i for i in items if i.get("track")]
         artists = set(i["track"].get("artistName") for i in track_items if i.get("track"))
@@ -450,13 +462,15 @@ def get_playlist_stats() -> pd.DataFrame:
 
 @lru_cache(maxsize=1)
 def get_all_playlist_tracks() -> pd.DataFrame:
-    """Get all tracks from all playlists with playlist names."""
+    """Get all tracks from all playlists (excluding filtered playlists)."""
     data = load_playlists()
     playlists = data.get("playlists", [])
 
     tracks = []
     for p in playlists:
         playlist_name = p.get("name", "Unknown")
+        if playlist_name in EXCLUDED_PLAYLISTS:
+            continue
         for item in p.get("items", []):
             if item.get("track"):
                 track = item["track"]
