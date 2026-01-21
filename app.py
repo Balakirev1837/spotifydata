@@ -23,6 +23,8 @@ from data_loader import (
     get_top_tracks,
     get_top_albums,
     get_most_skipped,
+    get_one_hit_wonders,
+    get_one_hit_wonder_stats,
     get_playlist_names,
     get_playlist_stats,
     get_playlist_top_artists,
@@ -194,6 +196,25 @@ def render_top_tracks_by_minutes(df: pd.DataFrame, year: int = None):
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+
+def render_one_hit_wonders(df: pd.DataFrame):
+    """Render one-hit wonders stats and list."""
+    stats = get_one_hit_wonder_stats(df)
+    wonders = get_one_hit_wonders(df, limit=20)
+
+    st.markdown(f"### One-Hit Wonders")
+    st.caption(f"{stats['one_hit_count']:,} tracks ({stats['one_hit_percent']}%) played only once")
+
+    if not wonders.empty:
+        wonders_display = wonders[["track", "artist", "played_on"]].copy()
+        wonders_display["played_on"] = pd.to_datetime(wonders_display["played_on"]).dt.strftime("%Y-%m-%d")
+        wonders_display = wonders_display.rename(columns={
+            "track": "Track",
+            "artist": "Artist",
+            "played_on": "Played On",
+        })
+        st.dataframe(wonders_display, use_container_width=True, hide_index=True, height=480)
 
 
 def render_most_skipped(df: pd.DataFrame):
@@ -439,8 +460,12 @@ def main():
 
         st.markdown("---")
 
-        # Most skipped
-        render_most_skipped(filtered_df)
+        # Most skipped and one-hit wonders
+        col1, col2 = st.columns(2)
+        with col1:
+            render_most_skipped(filtered_df)
+        with col2:
+            render_one_hit_wonders(df)
 
     with tab2:
         st.subheader("Search")

@@ -28,7 +28,7 @@ uv run streamlit run app.py
 ```
 
 ### Key Features
-- **Dashboard**: Top albums, top artists, top tracks (by plays AND by minutes), most skipped tracks
+- **Dashboard**: Top albums, top artists, top tracks (by plays AND by minutes), most skipped tracks, one-hit wonders (tracks played only once)
 - **Search**: Look up any track/artist with per-artist heatmaps showing listening patterns
 - **Playlists**: Deep playlist analysis - sizes, top artists per playlist, track overlap detection (find tracks that appear in other playlists), playlist comparison, cross-playlist insights (shared artists/tracks)
 

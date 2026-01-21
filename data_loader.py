@@ -247,6 +247,38 @@ def get_top_tracks(df: pd.DataFrame, year: int = None, limit: int = 20, by: str 
     return stats.sort_values(sort_col, ascending=False).head(limit)
 
 
+def get_one_hit_wonders(df: pd.DataFrame, limit: int = 50) -> pd.DataFrame:
+    """Get tracks that have only been played once ever."""
+    track_counts = df.groupby(["track", "artist", "album"]).agg(
+        play_count=("ts", "count"),
+        played_on=("ts", "first"),
+        minutes_played=("minutes_played", "sum"),
+    ).reset_index()
+
+    one_hits = track_counts[track_counts["play_count"] == 1].copy()
+    one_hits = one_hits.sort_values("played_on", ascending=False)
+
+    return one_hits.head(limit)
+
+
+def get_one_hit_wonder_stats(df: pd.DataFrame) -> dict:
+    """Get overall stats about one-hit wonders."""
+    track_counts = df.groupby(["track", "artist"]).size().reset_index(name="play_count")
+
+    total_unique_tracks = len(track_counts)
+    one_hits = len(track_counts[track_counts["play_count"] == 1])
+    two_hits = len(track_counts[track_counts["play_count"] == 2])
+    three_plus = len(track_counts[track_counts["play_count"] >= 3])
+
+    return {
+        "total_unique_tracks": total_unique_tracks,
+        "one_hit_count": one_hits,
+        "one_hit_percent": round(one_hits / total_unique_tracks * 100, 1) if total_unique_tracks > 0 else 0,
+        "two_hit_count": two_hits,
+        "three_plus_count": three_plus,
+    }
+
+
 def get_most_skipped(df: pd.DataFrame, limit: int = 20) -> pd.DataFrame:
     """Get most skipped tracks."""
     skipped = df[df["skipped"] == True]
