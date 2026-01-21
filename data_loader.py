@@ -248,35 +248,132 @@ def get_top_tracks(df: pd.DataFrame, year: int = None, limit: int = 20, by: str 
 
 
 def get_one_hit_wonders(df: pd.DataFrame, limit: int = 50) -> pd.DataFrame:
-    """Get tracks that have only been played once ever."""
+    """
+    Get tracks that have only been played once ever.
+    Filtered to: 2+ minutes played AND not on any playlist.
+    """
+    # Get tracks on playlists
+    playlist_tracks = get_all_playlist_tracks()
+    if not playlist_tracks.empty:
+        playlist_set = set(zip(playlist_tracks["track"], playlist_tracks["artist"]))
+    else:
+        playlist_set = set()
+
+    # Aggregate streaming data
     track_counts = df.groupby(["track", "artist", "album"]).agg(
         play_count=("ts", "count"),
         played_on=("ts", "first"),
-        minutes_played=("minutes_played", "sum"),
+        ms_played=("ms_played", "sum"),
     ).reset_index()
 
-    one_hits = track_counts[track_counts["play_count"] == 1].copy()
-    one_hits = one_hits.sort_values("played_on", ascending=False)
+    # Filter: played exactly once, 2+ minutes, not on any playlist
+    one_hits = track_counts[
+        (track_counts["play_count"] == 1) &
+        (track_counts["ms_played"] >= 120000)  # 2+ minutes
+    ].copy()
 
+    # Remove tracks that are on playlists
+    one_hits["on_playlist"] = one_hits.apply(
+        lambda row: (row["track"], row["artist"]) in playlist_set, axis=1
+    )
+    one_hits = one_hits[~one_hits["on_playlist"]]
+
+    one_hits = one_hits.sort_values("played_on", ascending=False)
     return one_hits.head(limit)
 
 
 def get_one_hit_wonder_stats(df: pd.DataFrame) -> dict:
-    """Get overall stats about one-hit wonders."""
-    track_counts = df.groupby(["track", "artist"]).size().reset_index(name="play_count")
+    """Get overall stats about one-hit wonders (2+ min, not on playlist)."""
+    # Get tracks on playlists
+    playlist_tracks = get_all_playlist_tracks()
+    if not playlist_tracks.empty:
+        playlist_set = set(zip(playlist_tracks["track"], playlist_tracks["artist"]))
+    else:
+        playlist_set = set()
+
+    track_counts = df.groupby(["track", "artist"]).agg(
+        play_count=("ts", "count"),
+        ms_played=("ms_played", "sum"),
+    ).reset_index()
+
+    # Filter to 2+ minutes
+    track_counts = track_counts[track_counts["ms_played"] >= 120000]
+
+    # Mark if on playlist
+    track_counts["on_playlist"] = track_counts.apply(
+        lambda row: (row["track"], row["artist"]) in playlist_set, axis=1
+    )
+
+    # One-hits: played once AND not on playlist
+    one_hits = track_counts[
+        (track_counts["play_count"] == 1) &
+        (~track_counts["on_playlist"])
+    ]
 
     total_unique_tracks = len(track_counts)
-    one_hits = len(track_counts[track_counts["play_count"] == 1])
-    two_hits = len(track_counts[track_counts["play_count"] == 2])
-    three_plus = len(track_counts[track_counts["play_count"] >= 3])
+    one_hit_count = len(one_hits)
 
     return {
         "total_unique_tracks": total_unique_tracks,
-        "one_hit_count": one_hits,
-        "one_hit_percent": round(one_hits / total_unique_tracks * 100, 1) if total_unique_tracks > 0 else 0,
-        "two_hit_count": two_hits,
-        "three_plus_count": three_plus,
+        "one_hit_count": one_hit_count,
+        "one_hit_percent": round(one_hit_count / total_unique_tracks * 100, 1) if total_unique_tracks > 0 else 0,
     }
+
+
+def get_not_on_playlist_stats(df: pd.DataFrame) -> dict:
+    """Get stats about tracks played but not on any playlist."""
+    playlist_tracks = get_all_playlist_tracks()
+    if not playlist_tracks.empty:
+        playlist_set = set(zip(playlist_tracks["track"], playlist_tracks["artist"]))
+    else:
+        playlist_set = set()
+
+    # Aggregate streaming data
+    track_counts = df.groupby(["track", "artist"]).agg(
+        play_count=("ts", "count"),
+        total_minutes=("minutes_played", "sum"),
+    ).reset_index()
+
+    # Mark if on playlist
+    track_counts["on_playlist"] = track_counts.apply(
+        lambda row: (row["track"], row["artist"]) in playlist_set, axis=1
+    )
+
+    on_playlist = track_counts[track_counts["on_playlist"]]
+    not_on_playlist = track_counts[~track_counts["on_playlist"]]
+
+    return {
+        "total_unique_tracks": len(track_counts),
+        "on_playlist_count": len(on_playlist),
+        "not_on_playlist_count": len(not_on_playlist),
+        "not_on_playlist_percent": round(len(not_on_playlist) / len(track_counts) * 100, 1) if len(track_counts) > 0 else 0,
+        "not_on_playlist_plays": not_on_playlist["play_count"].sum(),
+        "not_on_playlist_minutes": not_on_playlist["total_minutes"].sum(),
+    }
+
+
+def get_top_not_on_playlist(df: pd.DataFrame, limit: int = 20) -> pd.DataFrame:
+    """Get most played tracks that are NOT on any playlist."""
+    playlist_tracks = get_all_playlist_tracks()
+    if not playlist_tracks.empty:
+        playlist_set = set(zip(playlist_tracks["track"], playlist_tracks["artist"]))
+    else:
+        playlist_set = set()
+
+    # Aggregate streaming data
+    track_counts = df.groupby(["track", "artist", "album"]).agg(
+        play_count=("ts", "count"),
+        total_minutes=("minutes_played", "sum"),
+        last_played=("ts", "max"),
+    ).reset_index()
+
+    # Filter to NOT on playlist
+    track_counts["on_playlist"] = track_counts.apply(
+        lambda row: (row["track"], row["artist"]) in playlist_set, axis=1
+    )
+    not_on_playlist = track_counts[~track_counts["on_playlist"]].copy()
+
+    return not_on_playlist.sort_values("play_count", ascending=False).head(limit)
 
 
 def get_most_skipped(df: pd.DataFrame, limit: int = 20) -> pd.DataFrame:

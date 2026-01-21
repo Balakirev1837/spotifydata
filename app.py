@@ -25,6 +25,8 @@ from data_loader import (
     get_most_skipped,
     get_one_hit_wonders,
     get_one_hit_wonder_stats,
+    get_not_on_playlist_stats,
+    get_top_not_on_playlist,
     get_playlist_names,
     get_playlist_stats,
     get_playlist_top_artists,
@@ -204,7 +206,7 @@ def render_one_hit_wonders(df: pd.DataFrame):
     wonders = get_one_hit_wonders(df, limit=20)
 
     st.markdown(f"### One-Hit Wonders")
-    st.caption(f"{stats['one_hit_count']:,} tracks ({stats['one_hit_percent']}%) played only once")
+    st.caption(f"{stats['one_hit_count']:,} tracks ({stats['one_hit_percent']}%) played once, 2+ min, not on any playlist")
 
     if not wonders.empty:
         wonders_display = wonders[["track", "artist", "played_on"]].copy()
@@ -215,6 +217,42 @@ def render_one_hit_wonders(df: pd.DataFrame):
             "played_on": "Played On",
         })
         st.dataframe(wonders_display, use_container_width=True, hide_index=True, height=480)
+    else:
+        st.info("No one-hit wonders found")
+
+
+def render_not_on_playlist(df: pd.DataFrame):
+    """Render stats and top tracks not on any playlist."""
+    stats = get_not_on_playlist_stats(df)
+    top = get_top_not_on_playlist(df, limit=20)
+
+    st.markdown("### Not On Any Playlist")
+    st.caption(f"{stats['not_on_playlist_count']:,} tracks ({stats['not_on_playlist_percent']}%) played but not saved to playlists")
+
+    if not top.empty:
+        top_display = top.copy()
+        top_display["label"] = top_display["track"] + " - " + top_display["artist"]
+
+        fig = px.bar(
+            top_display,
+            x="play_count",
+            y="label",
+            orientation="h",
+            title="Most Played (Not on Playlist)",
+            labels={"play_count": "Plays", "label": ""},
+            color="total_minutes",
+            color_continuous_scale="Reds",
+        )
+
+        fig.update_layout(
+            yaxis=dict(autorange="reversed"),
+            height=550,
+            margin=dict(l=0, r=0, t=40, b=0),
+            showlegend=False,
+            coloraxis_showscale=False,
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
 
 
 def render_most_skipped(df: pd.DataFrame):
@@ -466,6 +504,11 @@ def main():
             render_most_skipped(filtered_df)
         with col2:
             render_one_hit_wonders(df)
+
+        st.markdown("---")
+
+        # Not on any playlist
+        render_not_on_playlist(df)
 
     with tab2:
         st.subheader("Search")
