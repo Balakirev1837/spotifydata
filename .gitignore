@@ -12,5 +12,8 @@ wheels/
 # Spotify data (personal/private)
 StreamingHistory/
 
+# Cache (API responses)
+.cache/
+
 # Misc
 nul

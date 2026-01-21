@@ -31,6 +31,7 @@ uv run streamlit run app.py
 - **Dashboard**: Top albums, top artists, top tracks (by plays AND by minutes), most skipped tracks, one-hit wonders (tracks played once, 2+ min, not on playlist), not-on-playlist analysis (most played tracks you haven't saved)
 - **Search**: Look up any track/artist with per-artist heatmaps showing listening patterns
 - **Playlists**: Deep playlist analysis - sizes, top artists per playlist, track overlap detection (find tracks that appear in other playlists), playlist comparison, cross-playlist insights (shared artists/tracks)
+- **Genres**: Genre breakdown and trends (requires Spotify API credentials - see SPOTIFY_API.md)
 
 ### Data Sources
 
@@ -49,6 +50,24 @@ User playlists with tracks:
 - `playlists[].name` - Playlist name
 - `playlists[].items[].track` - Track info (trackName, artistName, albumName, trackUri)
 - `playlists[].collaborators` - Playlist collaborators
+
+### Spotify API Integration (Optional)
+
+For genre analysis, the app can fetch artist genres from the Spotify Web API.
+See `SPOTIFY_API.md` for full documentation.
+
+**Quick setup:**
+1. Create app at [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard)
+2. Set environment variables:
+   ```
+   SPOTIFY_CLIENT_ID=your_id
+   SPOTIFY_CLIENT_SECRET=your_secret
+   ```
+3. Restart app - genres will be fetched and cached automatically
+
+**Files:**
+- `spotify_api.py` - API authentication and fetching
+- `.cache/artist_genres.json` - Cached genre data (gitignored)
 
 ### Future Considerations
 - Digital signage deployment (auto-refresh, kiosk mode)

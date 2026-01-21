@@ -36,6 +36,10 @@ from data_loader import (
     get_track_duplicates,
     get_playlist_overlap,
     get_overall_playlist_summary,
+    get_genre_status,
+    get_top_genres,
+    get_genre_trends,
+    get_artist_genre,
 )
 
 
@@ -466,7 +470,7 @@ def main():
     st.markdown("---")
 
     # Navigation tabs
-    tab1, tab2, tab3 = st.tabs(["Dashboard", "Search", "Playlists"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Dashboard", "Search", "Playlists", "Genres"])
 
     with tab1:
         # Year filter
@@ -724,6 +728,108 @@ def main():
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.info("No tracks appear in multiple playlists")
+
+    with tab4:
+        st.subheader("Genre Analysis")
+
+        # Check genre data status
+        genre_status = get_genre_status()
+
+        if not genre_status["has_genre_data"]:
+            st.warning("Genre data not available yet.")
+            st.markdown("""
+            ### Setup Required
+
+            To enable genre analysis, you need to:
+
+            1. **Create a Spotify Developer App** at [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard)
+            2. **Set environment variables:**
+               ```
+               SPOTIFY_CLIENT_ID=your_client_id
+               SPOTIFY_CLIENT_SECRET=your_client_secret
+               ```
+            3. **Restart the app** to fetch genre data
+
+            Once configured, the app will automatically fetch and cache genre data for your artists.
+            """)
+
+            col1, col2 = st.columns(2)
+            col1.metric("API Configured", "Yes" if genre_status["api_available"] else "No")
+            col2.metric("Cached Artists", genre_status["cached_artists"])
+
+        else:
+            # Genre data available - show visualizations
+            col1, col2 = st.columns(4)
+            col1.metric("Cached Artists", genre_status["cached_artists"])
+
+            st.markdown("---")
+
+            # Top genres
+            st.markdown("### Top Genres")
+            top_genres = get_top_genres(df, limit=20)
+
+            if not top_genres.empty:
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    fig = px.bar(
+                        top_genres,
+                        x="play_count",
+                        y="genre",
+                        orientation="h",
+                        title="Genres by Play Count",
+                        labels={"play_count": "Plays", "genre": ""},
+                        color="total_minutes",
+                        color_continuous_scale="Viridis",
+                    )
+                    fig.update_layout(
+                        yaxis=dict(autorange="reversed"),
+                        height=550,
+                        margin=dict(l=0, r=0, t=40, b=0),
+                        showlegend=False,
+                        coloraxis_showscale=False,
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+
+                with col2:
+                    # Pie chart of top genres
+                    top_10 = top_genres.head(10)
+                    fig = px.pie(
+                        top_10,
+                        values="play_count",
+                        names="genre",
+                        title="Top 10 Genres Distribution",
+                        hole=0.4,
+                    )
+                    fig.update_layout(
+                        height=550,
+                        margin=dict(l=0, r=0, t=40, b=0),
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+
+            st.markdown("---")
+
+            # Genre trends over time
+            st.markdown("### Genre Trends Over Time")
+            trends = get_genre_trends(df, top_n=5)
+
+            if not trends.empty:
+                fig = px.line(
+                    trends,
+                    x="period",
+                    y="play_count",
+                    color="genre",
+                    title="Top 5 Genres Over Time",
+                    labels={"period": "Month", "play_count": "Plays", "genre": "Genre"},
+                )
+                fig.update_layout(
+                    height=400,
+                    margin=dict(l=0, r=0, t=40, b=0),
+                    xaxis=dict(tickangle=45),
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Not enough data for genre trends")
 
 
 if __name__ == "__main__":

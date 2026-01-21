@@ -9,6 +9,13 @@ from functools import lru_cache
 
 import pandas as pd
 
+from spotify_api import (
+    is_api_available,
+    get_api_status,
+    load_genre_cache,
+    enrich_with_genres,
+)
+
 
 DATA_DIR = Path(__file__).parent / "StreamingHistory"
 
@@ -626,3 +633,110 @@ def get_overall_playlist_summary() -> dict:
         "largest_playlist": stats.iloc[0]["name"] if not stats.empty else "",
         "largest_playlist_size": stats.iloc[0]["track_count"] if not stats.empty else 0,
     }
+
+
+# ============ Genre Data (Spotify API) ============
+
+def get_genre_status() -> dict:
+    """Get status of genre data availability."""
+    status = get_api_status()
+    cache = load_genre_cache()
+    return {
+        "api_available": status["credentials_configured"],
+        "cached_artists": len(cache),
+        "has_genre_data": len(cache) > 0,
+    }
+
+
+def get_artist_genres_map() -> dict[str, list[str]]:
+    """Get mapping of artist name -> genres from cache."""
+    return load_genre_cache()
+
+
+def get_top_genres(df: pd.DataFrame, limit: int = 20) -> pd.DataFrame:
+    """
+    Get top genres by play count.
+    Requires genre data to be cached (from Spotify API).
+    """
+    genre_map = load_genre_cache()
+    if not genre_map:
+        return pd.DataFrame()
+
+    # Count plays per artist
+    artist_plays = df.groupby("artist").agg(
+        play_count=("ts", "count"),
+        total_minutes=("minutes_played", "sum"),
+    ).reset_index()
+
+    # Expand genres (each artist can have multiple)
+    genre_plays = []
+    for _, row in artist_plays.iterrows():
+        artist = row["artist"]
+        genres = genre_map.get(artist, [])
+        for genre in genres:
+            genre_plays.append({
+                "genre": genre,
+                "play_count": row["play_count"],
+                "total_minutes": row["total_minutes"],
+            })
+
+    if not genre_plays:
+        return pd.DataFrame()
+
+    genre_df = pd.DataFrame(genre_plays)
+    stats = genre_df.groupby("genre").agg(
+        play_count=("play_count", "sum"),
+        total_minutes=("total_minutes", "sum"),
+    ).reset_index()
+
+    return stats.sort_values("play_count", ascending=False).head(limit)
+
+
+def get_genre_trends(df: pd.DataFrame, top_n: int = 5) -> pd.DataFrame:
+    """
+    Get genre listening trends over time.
+    Returns play counts per genre per month.
+    """
+    genre_map = load_genre_cache()
+    if not genre_map:
+        return pd.DataFrame()
+
+    # Add period column
+    df_copy = df.copy()
+    df_copy["period"] = df_copy["ts"].dt.to_period("M").astype(str)
+
+    # Get top genres first
+    top_genres_df = get_top_genres(df, limit=top_n)
+    if top_genres_df.empty:
+        return pd.DataFrame()
+
+    top_genres = set(top_genres_df["genre"].tolist())
+
+    # Build genre plays per period
+    results = []
+    for _, row in df_copy.iterrows():
+        artist = row["artist"]
+        genres = genre_map.get(artist, [])
+        for genre in genres:
+            if genre in top_genres:
+                results.append({
+                    "period": row["period"],
+                    "genre": genre,
+                    "play_count": 1,
+                })
+
+    if not results:
+        return pd.DataFrame()
+
+    result_df = pd.DataFrame(results)
+    stats = result_df.groupby(["period", "genre"]).agg(
+        play_count=("play_count", "sum"),
+    ).reset_index()
+
+    return stats
+
+
+def get_artist_genre(artist_name: str) -> list[str]:
+    """Get genres for a specific artist from cache."""
+    genre_map = load_genre_cache()
+    return genre_map.get(artist_name, [])
