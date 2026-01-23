@@ -94,7 +94,7 @@ def render_heatmap(df: pd.DataFrame, title: str = "Listening Activity", colorsca
         margin=dict(l=0, r=0, t=40, b=0),
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_top_albums(df: pd.DataFrame, year: int = None):
@@ -121,7 +121,7 @@ def render_top_albums(df: pd.DataFrame, year: int = None):
         coloraxis_showscale=False,
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_top_artists(df: pd.DataFrame, year: int = None):
@@ -147,7 +147,7 @@ def render_top_artists(df: pd.DataFrame, year: int = None):
         coloraxis_showscale=False,
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_top_tracks(df: pd.DataFrame, year: int = None):
@@ -174,7 +174,7 @@ def render_top_tracks(df: pd.DataFrame, year: int = None):
         coloraxis_showscale=False,
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_top_tracks_by_minutes(df: pd.DataFrame, year: int = None):
@@ -201,7 +201,7 @@ def render_top_tracks_by_minutes(df: pd.DataFrame, year: int = None):
         coloraxis_showscale=False,
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_one_hit_wonders(df: pd.DataFrame):
@@ -220,7 +220,7 @@ def render_one_hit_wonders(df: pd.DataFrame):
             "artist": "Artist",
             "played_on": "Played On",
         })
-        st.dataframe(wonders_display, use_container_width=True, hide_index=True, height=480)
+        st.dataframe(wonders_display, width="stretch", hide_index=True, height=480)
     else:
         st.info("No one-hit wonders found")
 
@@ -256,7 +256,7 @@ def render_not_on_playlist(df: pd.DataFrame):
             coloraxis_showscale=False,
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 
 def render_most_skipped(df: pd.DataFrame):
@@ -283,7 +283,7 @@ def render_most_skipped(df: pd.DataFrame):
         coloraxis_showscale=False,
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_search_results(df: pd.DataFrame, query: str):
@@ -311,7 +311,7 @@ def render_search_results(df: pd.DataFrame, query: str):
 
     st.dataframe(
         display_df,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -344,7 +344,7 @@ def render_search_results(df: pd.DataFrame, query: str):
                     title="Plays by Year",
                 )
                 fig.update_layout(height=250)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
             # Show play history heatmap for this track
             render_track_heatmap(stats["plays_df"])
@@ -373,7 +373,7 @@ def render_track_heatmap(plays_df: pd.DataFrame):
         margin=dict(l=0, r=0, t=40, b=0),
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_artist_search_results(df: pd.DataFrame, query: str):
@@ -400,7 +400,7 @@ def render_artist_search_results(df: pd.DataFrame, query: str):
 
     st.dataframe(
         display_df,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -444,7 +444,7 @@ def render_artist_search_results(df: pd.DataFrame, query: str):
             showlegend=False,
             coloraxis_showscale=False,
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 
 def render_stats_overview(df: pd.DataFrame):
@@ -571,7 +571,7 @@ def main():
                 margin=dict(l=0, r=0, t=40, b=0),
                 coloraxis_colorbar_title="Artists",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         st.markdown("---")
 
@@ -610,7 +610,7 @@ def main():
                             showlegend=False,
                             coloraxis_showscale=False,
                         )
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width="stretch")
 
                 with col2:
                     # Track list for this playlist
@@ -622,7 +622,7 @@ def main():
                             "artist": "Artist",
                             "album": "Album",
                         })
-                        st.dataframe(display_df, use_container_width=True, hide_index=True, height=400)
+                        st.dataframe(display_df, width="stretch", hide_index=True, height=400)
 
                 # Tracks that appear in other playlists
                 overlaps = get_playlist_track_overlaps(selected_playlist)
@@ -638,7 +638,7 @@ def main():
                         "overlap_count": "# Other Playlists",
                         "other_playlists_str": "Also In",
                     })
-                    st.dataframe(overlap_display, use_container_width=True, hide_index=True)
+                    st.dataframe(overlap_display, width="stretch", hide_index=True)
                 else:
                     st.success("No overlapping tracks - this playlist is unique!")
 
@@ -665,7 +665,7 @@ def main():
                     st.markdown(f"**{overlap['shared_track_count']} shared tracks:**")
                     shared_df = pd.DataFrame(overlap['shared_tracks'])
                     shared_df = shared_df.rename(columns={"track": "Track", "artist": "Artist"})
-                    st.dataframe(shared_df, use_container_width=True, hide_index=True)
+                    st.dataframe(shared_df, width="stretch", hide_index=True)
 
                 if overlap['shared_artists']:
                     with st.expander(f"View {overlap['shared_artist_count']} shared artists"):
@@ -700,7 +700,7 @@ def main():
                     showlegend=False,
                     coloraxis_colorbar_title="Tracks",
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
         with col2:
             # Duplicate tracks across playlists
@@ -725,7 +725,7 @@ def main():
                     showlegend=False,
                     coloraxis_showscale=False,
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
             else:
                 st.info("No tracks appear in multiple playlists")
 
@@ -789,7 +789,7 @@ def main():
                         showlegend=False,
                         coloraxis_showscale=False,
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
 
                 with col2:
                     # Pie chart of top genres
@@ -805,7 +805,7 @@ def main():
                         height=550,
                         margin=dict(l=0, r=0, t=40, b=0),
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
 
             st.markdown("---")
 
@@ -827,7 +827,7 @@ def main():
                     margin=dict(l=0, r=0, t=40, b=0),
                     xaxis=dict(tickangle=45),
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
             else:
                 st.info("Not enough data for genre trends")
 
