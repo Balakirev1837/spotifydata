@@ -10,7 +10,7 @@ from functools import lru_cache
 import pandas as pd
 
 # Timezone for displaying times (Spotify stores UTC)
-LOCAL_TIMEZONE = "America/Chicago"  # Central Time
+LOCAL_TIMEZONE = "America/New_York"  # Eastern Time
 
 from spotify_api import (
     is_api_available,
