@@ -9,6 +9,9 @@ from functools import lru_cache
 
 import pandas as pd
 
+# Timezone for displaying times (Spotify stores UTC)
+LOCAL_TIMEZONE = "America/Chicago"  # Central Time
+
 from spotify_api import (
     is_api_available,
     get_api_status,
@@ -51,22 +54,25 @@ def load_all_data() -> pd.DataFrame:
 def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Preprocess the raw streaming data.
-    - Parse timestamps
+    - Parse timestamps and convert to local timezone
     - Add time-based columns for analysis
     - Convert ms_played to minutes
     - Filter to music only (exclude podcasts/audiobooks)
     """
-    # Parse timestamp
-    df["ts"] = pd.to_datetime(df["ts"])
+    # Parse timestamp (Spotify uses UTC with 'Z' suffix)
+    df["ts"] = pd.to_datetime(df["ts"], utc=True)
 
-    # Add time-based columns for analysis
-    df["year"] = df["ts"].dt.year
-    df["month"] = df["ts"].dt.month
-    df["day"] = df["ts"].dt.day
-    df["hour"] = df["ts"].dt.hour
-    df["day_of_week"] = df["ts"].dt.dayofweek  # 0=Monday, 6=Sunday
-    df["day_name"] = df["ts"].dt.day_name()
-    df["date"] = df["ts"].dt.date
+    # Convert to local timezone for time-based analysis
+    ts_local = df["ts"].dt.tz_convert(LOCAL_TIMEZONE)
+
+    # Add time-based columns for analysis (using local time)
+    df["year"] = ts_local.dt.year
+    df["month"] = ts_local.dt.month
+    df["day"] = ts_local.dt.day
+    df["hour"] = ts_local.dt.hour
+    df["day_of_week"] = ts_local.dt.dayofweek  # 0=Monday, 6=Sunday
+    df["day_name"] = ts_local.dt.day_name()
+    df["date"] = ts_local.dt.date
 
     # Convert ms to minutes
     df["minutes_played"] = df["ms_played"] / 60000
