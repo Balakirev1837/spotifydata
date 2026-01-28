@@ -71,11 +71,15 @@ def render_heatmap(df: pd.DataFrame, title: str = "Listening Activity", colorsca
     """Render a listening activity heatmap."""
     heatmap_data = get_heatmap_data(df)
 
+    # Filter to operating hours (8am-8pm)
+    hours = list(range(8, 21))
+    heatmap_data = heatmap_data[[h for h in hours if h in heatmap_data.columns]]
+
     day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
     fig = go.Figure(data=go.Heatmap(
         z=heatmap_data.values,
-        x=list(range(24)),
+        x=hours,
         y=day_names,
         colorscale=colorscale,
         hovertemplate="Day: %{y}<br>Hour: %{x}:00<br>Plays: %{z}<extra></extra>",
@@ -350,11 +354,15 @@ def render_track_heatmap(plays_df: pd.DataFrame):
     """Render a heatmap for a specific track's play history."""
     heatmap_data = get_heatmap_data(plays_df)
 
+    # Filter to operating hours (8am-8pm)
+    hours = list(range(8, 21))
+    heatmap_data = heatmap_data[[h for h in hours if h in heatmap_data.columns]]
+
     day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
     fig = go.Figure(data=go.Heatmap(
         z=heatmap_data.values,
-        x=list(range(24)),
+        x=hours,
         y=day_names,
         colorscale="Blues",
         hovertemplate="Day: %{y}<br>Hour: %{x}:00<br>Plays: %{z}<extra></extra>",
