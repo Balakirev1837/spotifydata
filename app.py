@@ -517,11 +517,13 @@ def main():
             "Search for:",
             ["Tracks", "Artists"],
             horizontal=True,
+            key="search_type",
         )
 
         query = st.text_input(
             f"Search for {'a track or album' if search_type == 'Tracks' else 'an artist'}",
             placeholder="e.g., Bohemian Rhapsody, Abbey Road..." if search_type == "Tracks" else "e.g., The Beatles, Taylor Swift...",
+            key="search_query",
         )
 
         if query:
