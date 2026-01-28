@@ -2,6 +2,40 @@
 
 This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
 
+## Beads Workflow (REQUIRED)
+
+**All work MUST be tracked with beads.** This ensures work persists across sessions and enables multi-session project management.
+
+### When to Use Beads
+- **Features**: Any new functionality (`bd create --type=feature`)
+- **Bugs**: Issues to fix (`bd create --type=bug`)
+- **Tasks**: General work items (`bd create --type=task`)
+- **Multi-step work**: Anything requiring multiple sessions
+- **Discovered work**: Issues found while working on something else
+
+### Session Start
+```bash
+bd prime              # Load context (auto-runs via hooks)
+bd ready              # Find available work
+bd show <id>          # Review issue details before starting
+bd update <id> --status=in_progress  # Claim work
+```
+
+### During Work
+- Create issues for discovered work: `bd create --title="..." --type=task --priority=2`
+- Add dependencies when needed: `bd dep add <issue> <depends-on>`
+- Priority scale: 0=critical, 1=high, 2=medium, 3=low, 4=backlog
+
+### Session End (MANDATORY)
+```bash
+git status              # Check changes
+git add <files>         # Stage code
+bd sync                 # Sync beads
+git commit -m "..."     # Commit code
+bd sync                 # Sync any new beads changes
+git push                # MUST push - work isn't done until pushed
+```
+
 ## Project Overview
 
 **Spotify Streaming History Visualizer** - A Python/Streamlit dashboard for visualizing Spotify listening data. Designed to be deployable as a webserver for digital signage.
@@ -77,13 +111,7 @@ See `SPOTIFY_API.md` for full documentation.
 
 ## Quick Reference
 
-```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --status in_progress  # Claim work
-bd close <id>         # Complete work
-bd sync               # Sync with git
-```
+See "Beads Workflow" section above for detailed bd commands.
 
 ## Landing the Plane (Session Completion)
 
