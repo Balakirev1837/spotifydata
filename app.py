@@ -30,6 +30,7 @@ from data_loader import (
     get_playlist_top_artists,
     get_playlist_tracks,
     get_playlist_track_overlaps,
+    get_track_playlists,
     get_artist_playlist_distribution,
     get_track_duplicates,
     get_playlist_overlap,
@@ -306,6 +307,13 @@ def render_search_results(df: pd.DataFrame, query: str):
             col2.metric("Total Minutes", f"{stats['total_minutes']:.1f}")
             col3.metric("First Played", stats["first_played"].strftime("%Y-%m-%d"))
             col4.metric("Last Played", stats["last_played"].strftime("%Y-%m-%d"))
+
+            # Show which playlists contain this track
+            playlists = get_track_playlists(top_result["track"], top_result["artist"])
+            if playlists:
+                st.markdown(f"**On {len(playlists)} playlist(s):** {', '.join(playlists)}")
+            else:
+                st.markdown("**Not on any playlist**")
 
             # Plays by year chart
             if stats["plays_by_year"]:

@@ -529,6 +529,22 @@ def get_playlist_tracks(playlist_name: str) -> pd.DataFrame:
     return df[df["playlist"] == playlist_name].copy()
 
 
+def get_track_playlists(track_name: str, artist_name: str) -> list[str]:
+    """Get list of playlists that contain a specific track (case-insensitive)."""
+    df = get_all_playlist_tracks()
+    if df.empty:
+        return []
+
+    # Case-insensitive matching
+    mask = (
+        (df["track"].str.lower() == track_name.lower()) &
+        (df["artist"].str.lower() == artist_name.lower())
+    )
+    matches = df[mask]
+
+    return sorted(matches["playlist"].unique().tolist())
+
+
 def get_artist_playlist_distribution(limit: int = 20) -> pd.DataFrame:
     """Get artists that appear in the most playlists."""
     df = get_all_playlist_tracks()
