@@ -343,7 +343,11 @@ def get_not_on_playlist_stats(df: pd.DataFrame) -> dict:
     """Get stats about tracks played but not on any playlist."""
     playlist_tracks = get_all_playlist_tracks()
     if not playlist_tracks.empty:
-        playlist_set = set(zip(playlist_tracks["track"], playlist_tracks["artist"]))
+        # Use lowercase for case-insensitive matching
+        playlist_set = set(
+            (str(t).lower(), str(a).lower())
+            for t, a in zip(playlist_tracks["track"], playlist_tracks["artist"])
+        )
     else:
         playlist_set = set()
 
@@ -353,9 +357,9 @@ def get_not_on_playlist_stats(df: pd.DataFrame) -> dict:
         total_minutes=("minutes_played", "sum"),
     ).reset_index()
 
-    # Mark if on playlist
+    # Mark if on playlist (case-insensitive)
     track_counts["on_playlist"] = track_counts.apply(
-        lambda row: (row["track"], row["artist"]) in playlist_set, axis=1
+        lambda row: (str(row["track"]).lower(), str(row["artist"]).lower()) in playlist_set, axis=1
     )
 
     on_playlist = track_counts[track_counts["on_playlist"]]
@@ -375,7 +379,11 @@ def get_top_not_on_playlist(df: pd.DataFrame, limit: int = 20) -> pd.DataFrame:
     """Get most played tracks that are NOT on any playlist."""
     playlist_tracks = get_all_playlist_tracks()
     if not playlist_tracks.empty:
-        playlist_set = set(zip(playlist_tracks["track"], playlist_tracks["artist"]))
+        # Use lowercase for case-insensitive matching
+        playlist_set = set(
+            (str(t).lower(), str(a).lower())
+            for t, a in zip(playlist_tracks["track"], playlist_tracks["artist"])
+        )
     else:
         playlist_set = set()
 
@@ -386,9 +394,9 @@ def get_top_not_on_playlist(df: pd.DataFrame, limit: int = 20) -> pd.DataFrame:
         last_played=("ts", "max"),
     ).reset_index()
 
-    # Filter to NOT on playlist
+    # Filter to NOT on playlist (case-insensitive)
     track_counts["on_playlist"] = track_counts.apply(
-        lambda row: (row["track"], row["artist"]) in playlist_set, axis=1
+        lambda row: (str(row["track"]).lower(), str(row["artist"]).lower()) in playlist_set, axis=1
     )
     not_on_playlist = track_counts[~track_counts["on_playlist"]].copy()
 
