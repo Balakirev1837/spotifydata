@@ -513,24 +513,28 @@ def main():
     with tab2:
         st.subheader("Search")
 
-        search_type = st.radio(
-            "Search for:",
-            ["Tracks", "Artists"],
-            horizontal=True,
-            key="search_type",
-        )
+        @st.fragment
+        def search_fragment():
+            search_type = st.radio(
+                "Search for:",
+                ["Tracks", "Artists"],
+                horizontal=True,
+                key="search_type",
+            )
 
-        query = st.text_input(
-            f"Search for {'a track or album' if search_type == 'Tracks' else 'an artist'}",
-            placeholder="e.g., Bohemian Rhapsody, Abbey Road..." if search_type == "Tracks" else "e.g., The Beatles, Taylor Swift...",
-            key="search_query",
-        )
+            query = st.text_input(
+                f"Search for {'a track or album' if search_type == 'Tracks' else 'an artist'}",
+                placeholder="e.g., Bohemian Rhapsody, Abbey Road..." if search_type == "Tracks" else "e.g., The Beatles, Taylor Swift...",
+                key="search_query",
+            )
 
-        if query:
-            if search_type == "Tracks":
-                render_search_results(df, query)
-            else:
-                render_artist_search_results(df, query)
+            if query:
+                if search_type == "Tracks":
+                    render_search_results(df, query)
+                else:
+                    render_artist_search_results(df, query)
+
+        search_fragment()
 
     with tab3:
         st.subheader("Playlist Analysis")
